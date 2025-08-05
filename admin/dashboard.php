@@ -7,7 +7,6 @@ if (!isset($_SESSION['is_admin']) || $_SESSION['is_admin'] != 1) {
     exit();
 }
 
-include '../includes/header.php';
 include '../includes/db.php';
 
 // Get dashboard statistics
@@ -109,8 +108,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete_servisor_id'])
 }
 
 // Get service categories and areas for form
-$service_categories = getServiceCategories($conn);
-$areas = getAreas($conn);
+// Get service categories and areas for form (fallback for old schema)
+$service_categories = [];
+$areas = [];
+
+// Check if new schema tables exist
+$table_check = $conn->query("SHOW TABLES LIKE 'service_categories'");
+if ($table_check && $table_check->num_rows > 0) {
+    $result = $conn->query("SELECT * FROM service_categories WHERE is_active = 1 ORDER BY name");
+    if ($result) {
+        $service_categories = $result->fetch_all(MYSQLI_ASSOC);
+    }
+} else {
+    // Fallback for old schema
+    $service_categories = [
+        ['id' => 1, 'name' => 'Plumber'],
+        ['id' => 2, 'name' => 'Electrician'],
+        ['id' => 3, 'name' => 'Mason'],
+        ['id' => 4, 'name' => 'Carpenter'],
+        ['id' => 5, 'name' => 'Technician']
+    ];
+}
+
+$table_check = $conn->query("SHOW TABLES LIKE 'areas'");
+if ($table_check && $table_check->num_rows > 0) {
+    $result = $conn->query("SELECT * FROM areas WHERE is_active = 1 ORDER BY name");
+    if ($result) {
+        $areas = $result->fetch_all(MYSQLI_ASSOC);
+    }
+} else {
+    // Fallback for old schema
+    $areas = [
+        ['id' => 1, 'name' => 'Jaffna Town'],
+        ['id' => 2, 'name' => 'Nallur'],
+        ['id' => 3, 'name' => 'Chunnakam'],
+        ['id' => 4, 'name' => 'Tellippalai']
+    ];
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -119,11 +153,12 @@ $areas = getAreas($conn);
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VK SERVICES - Admin Panel</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
     <style>
         body {
             background: #e0e7ef url('https://www.transparenttextures.com/patterns/cubes.png');
             font-family: 'Segoe UI', 'Poppins', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
         }
         .admin-sidebar {
             background: linear-gradient(180deg, #2563eb 0%, #1e40af 100%);
@@ -190,6 +225,9 @@ $areas = getAreas($conn);
             padding: 0.7rem 1.2rem;
             width: 100%;
             transition: background 0.18s, color 0.18s;
+            text-decoration: none;
+            display: block;
+            text-align: center;
         }
         .admin-sidebar .logout-btn:hover {
             background: #2563eb;
@@ -310,10 +348,60 @@ $areas = getAreas($conn);
         .form-label {
             font-weight: 500;
             color: #2563eb;
+            display: block;
+            margin-bottom: 0.5rem;
         }
         .form-control:focus {
             border-color: #2563eb;
             box-shadow: 0 0 0 0.2rem rgba(37,99,235,0.08);
+        }
+        .form-control {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e3f0ff;
+            border-radius: 0.5rem;
+            font-size: 1rem;
+            background: #fff;
+            transition: border-color 0.3s ease;
+            margin-bottom: 1rem;
+        }
+        .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin: -0.5rem;
+        }
+        .col-md-6, .col-md-4, .col-12 {
+            padding: 0.5rem;
+        }
+        .col-md-6 { flex: 0 0 50%; max-width: 50%; }
+        .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
+        .col-12 { flex: 0 0 100%; max-width: 100%; }
+        .g-3 > * { margin-bottom: 1rem; }
+        .text-end { text-align: right; }
+        .btn {
+            background: linear-gradient(135deg, #007BFF, #0056b3);
+            color: #fff;
+            border: none;
+            padding: 0.8rem 2rem;
+            border-radius: 2rem;
+            font-size: 1rem;
+            cursor: pointer;
+            margin: 0.5rem;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(0,123,255,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,123,255,0.3);
+            color: #fff;
+            text-decoration: none;
+        }
+        .btn-primary {
+            background: #2563eb;
+            border: none;
         }
         .servisor-list {
             margin-top: 1.5rem;
@@ -359,6 +447,7 @@ $areas = getAreas($conn);
             .admin-sidebar { position: static; width: 100%; min-height: unset; flex-direction: row; align-items: center; justify-content: space-between; border-radius: 0; }
             .admin-sidebar ul { flex-direction: row; gap: 1.2rem; padding: 0; }
             .admin-sidebar .sidebar-title { padding: 1rem; margin-bottom: 0; }
+            .col-md-6, .col-md-4 { flex: 0 0 100%; max-width: 100%; }
         }
         @media (max-width: 600px) {
             .dashboard-cards { flex-direction: column; gap: 1rem; }
@@ -369,7 +458,7 @@ $areas = getAreas($conn);
 </head>
 <body>
     <div class="admin-sidebar">
-        <div class="sidebar-title">VK SERVICES <span class="admin-badge">ADMIN PANEL</span></div>
+        <div class="sidebar-title">JAFFNA SERVICES <span class="admin-badge">ADMIN</span></div>
         <ul>
             <li><a href="#" class="active"><i class="fa fa-home"></i> Dashboard</a></li>
             <li><a href="#add-servisor"><i class="fa fa-user-plus"></i> Add Servisor</a></li>
@@ -382,8 +471,11 @@ $areas = getAreas($conn);
             <div class="admin-main-boxed">
                 <div class="admin-watermark">ADMIN</div>
                 <div class="admin-topbar">
-                    <div class="panel-title">VK SERVICES - Admin Panel <span class="admin-badge">ADMIN</span></div>
-                    <div class="profile-icon"><i class="fa fa-user-circle"></i></div>
+                    <div class="panel-title">JAFFNA SERVICES - Admin Panel <span class="admin-badge">ADMIN</span></div>
+                    <div class="profile-icon">
+                        <i class="fa fa-user-circle"></i>
+                        <span style="margin-left: 0.5rem; font-size: 0.9rem;"><?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Admin'); ?></span>
+                    </div>
                 </div>
                 <!-- Dashboard Stats -->
                 <div class="dashboard-cards">
@@ -410,7 +502,7 @@ $areas = getAreas($conn);
                     <div class="dashboard-card">
                         <div class="card-icon"><i class="fa fa-money-bill"></i></div>
                         <div class="card-title">Monthly Revenue</div>
-                        <div class="card-value"><?php echo formatCurrency($stats['monthly_revenue']); ?></div>
+                        <div class="card-value">LKR <?php echo number_format($stats['monthly_revenue'], 2); ?></div>
                     </div>
                 </div>
                 
@@ -479,7 +571,15 @@ $areas = getAreas($conn);
                     <input type="text" class="form-control" id="searchServisor" placeholder="Search Servisor by name or city...">
                     <div class="servisor-list" id="servisorList">
 <?php
-$result = $conn->query('SELECT sd.* FROM servisor_details sd ORDER BY sd.id DESC LIMIT 10');
+// Check if servisor_details view exists
+$table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
+if ($table_check && $table_check->num_rows > 0) {
+    $result = $conn->query('SELECT sd.* FROM servisor_details sd ORDER BY sd.id DESC LIMIT 10');
+} else {
+    // Fallback query for old schema
+    $result = $conn->query('SELECT s.*, s.service_type as service_category, "Jaffna" as area, 2500 as base_fee FROM servisors s ORDER BY s.id DESC LIMIT 10');
+}
+
 if ($result && $result->num_rows > 0) {
     while ($servisor = $result->fetch_assoc()) {
         echo '<div class="servisor-item">';
@@ -492,7 +592,7 @@ if ($result && $result->num_rows > 0) {
         echo '<div>';
         echo '<div class="servisor-name">' . htmlspecialchars($servisor['name']) . '</div>';
         echo '<div style="font-size:0.97em;color:#2563eb;">' . htmlspecialchars($servisor['service_category']) . ', ' . htmlspecialchars($servisor['area']) . '</div>';
-        echo '<div style="font-size:0.9em;color:#666;">Fee: ' . formatCurrency($servisor['base_fee']) . '</div>';
+        echo '<div style="font-size:0.9em;color:#666;">Fee: LKR ' . number_format($servisor['base_fee'], 2) . '</div>';
         echo '</div></div>';
         echo '<form method="POST" style="margin:0;">';
         echo '<input type="hidden" name="delete_servisor_id" value="' . $servisor['id'] . '">';
@@ -534,4 +634,4 @@ if ($result && $result->num_rows > 0) {
     });
     </script>
 </body>
-</html> 
+</html>
