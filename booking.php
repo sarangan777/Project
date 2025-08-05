@@ -62,8 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             INSERT INTO bookings (
                 booking_number, user_id, servisor_id, customer_name, customer_phone,
                 customer_email, customer_address, booking_date, booking_time,
-                service_description, estimated_cost, payment_method_id, status_id
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)
+                service_description, estimated_cost, payment_method_id
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         ");
         
         if ($stmt) {
@@ -85,10 +85,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $booking_time,
                 $service_description,
                 $estimated_cost,
-                $payment_method_id,
-                $status_id
-                $status_id
-                $status_id
+                $payment_method_id
             );
             
             if ($stmt->execute()) {
