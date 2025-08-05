@@ -201,13 +201,16 @@ $areas = getAreas($conn);
             min-height: 100vh;
             position: relative;
         }
+        .admin-content {
+            padding: 2rem;
+        }
         .admin-main-boxed {
-            max-width: 1100px;
-            margin: 2.5rem auto 2.5rem auto;
+            max-width: 1200px;
+            margin: 0 auto;
             background: rgba(255,255,255,0.98);
             border-radius: 1.5rem;
             box-shadow: 0 8px 32px rgba(37,99,235,0.10);
-            padding: 2.5rem 2.5rem 2.5rem 2.5rem;
+            padding: 2rem;
             position: relative;
             overflow: hidden;
         }
@@ -352,13 +355,14 @@ $areas = getAreas($conn);
         }
         @media (max-width: 900px) {
             .admin-main { margin-left: 0; }
+            .admin-content { padding: 1rem; }
             .admin-sidebar { position: static; width: 100%; min-height: unset; flex-direction: row; align-items: center; justify-content: space-between; border-radius: 0; }
             .admin-sidebar ul { flex-direction: row; gap: 1.2rem; padding: 0; }
             .admin-sidebar .sidebar-title { padding: 1rem; margin-bottom: 0; }
         }
         @media (max-width: 600px) {
             .dashboard-cards { flex-direction: column; gap: 1rem; }
-            .admin-main-boxed { padding: 0.5rem; }
+            .admin-main-boxed { padding: 1rem; }
             .add-servisor-form, .delete-servisor-section { padding: 1rem; }
         }
     </style>
@@ -374,13 +378,13 @@ $areas = getAreas($conn);
         <a class="logout-btn" href="../logout.php"><i class="fa fa-sign-out-alt"></i> Logout</a>
     </div>
     <div class="admin-main">
-        <div class="admin-main-boxed">
-            <div class="admin-watermark">ADMIN</div>
-            <div class="admin-topbar">
-                <div class="panel-title">VK SERVICES - Admin Panel <span class="admin-badge">ADMIN</span></div>
-                <div class="profile-icon"><i class="fa fa-user-circle"></i></div>
-            </div>
-            <div class="container-fluid">
+        <div class="admin-content">
+            <div class="admin-main-boxed">
+                <div class="admin-watermark">ADMIN</div>
+                <div class="admin-topbar">
+                    <div class="panel-title">VK SERVICES - Admin Panel <span class="admin-badge">ADMIN</span></div>
+                    <div class="profile-icon"><i class="fa fa-user-circle"></i></div>
+                </div>
                 <!-- Dashboard Stats -->
                 <div class="dashboard-cards">
                     <div class="dashboard-card">

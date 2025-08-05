@@ -98,12 +98,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif (!isset($message) && !DateTime::createFromFormat('Y-m-d', $booking_date)) {
         $message = '<div class="card" style="color:red;">Invalid date format. Use YYYY-MM-DD.</div>';
         error_log("Validation failed: Invalid date $booking_date");
-    } elseif (!isset($message) && !DateTime::createFromFormat('H:i:s', $booking_time)) {
-        $message = '<div class="card" style="color:red;">Invalid time format. Use HH:MM:SS.</div>';
+    } elseif (!isset($message) && !DateTime::createFromFormat('H:i', $booking_time)) {
+        $message = '<div class="message error">Invalid time format. Use HH:MM.</div>';
         error_log("Validation failed: Invalid time $booking_time");
     }
 
     if (!isset($message)) {
+        // Convert time format for database storage
+        $booking_time_formatted = $booking_time . ':00'; // Add seconds
+        
         // Get servisor details for booking
         $table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
         if ($table_check && $table_check->num_rows > 0) {
@@ -129,7 +132,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'customer_email' => $customer_email ?: null,
                         'customer_address' => $customer_address,
                         'booking_date' => $booking_date,
-                        'booking_time' => $booking_time,
+                        'booking_time' => $booking_time_formatted,
                         'service_description' => $service_description,
                         'estimated_cost' => $selected_servisor['base_fee']
                     ];
@@ -166,7 +169,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         'customer_email' => $customer_email ?: null,
                         'customer_address' => $customer_address,
                         'booking_date' => $booking_date,
-                        'booking_time' => $booking_time,
+                        'booking_time' => $booking_time_formatted,
                         'service_description' => $service_description,
                         'estimated_cost' => $selected_servisor['base_fee']
                     ];
@@ -195,7 +198,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <main class="container">
     <h2>Book <?php echo htmlspecialchars($servisor['name'] ?? 'a Service'); ?></h2>
     
-    <?php if ($message) echo $message; ?>
+    <?php if (!empty($message)) echo $message; ?>
     <?php displayFlashMessage(); ?>
     
     <?php if ($servisor): ?>
