@@ -11,14 +11,33 @@
     // Get servisor details if ID provided
     $servisor = null;
     if ($servisor_id) {
-        $stmt = $conn->prepare('SELECT sd.*, sc.name as service_category FROM servisor_details sd JOIN service_categories sc ON sd.service_category = sc.name WHERE sd.id = ? AND sd.is_approved = 1');
-        $stmt->bind_param('i', $servisor_id);
-        $stmt->execute();
-        $result = $stmt->get_result();
-        if ($result && $result->num_rows > 0) {
-            $servisor = $result->fetch_assoc();
+        // Check if new schema exists
+        $table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
+        if ($table_check && $table_check->num_rows > 0) {
+            // New schema with view
+            $stmt = $conn->prepare('SELECT * FROM servisor_details WHERE id = ? AND is_approved = 1');
+            $stmt->bind_param('i', $servisor_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result && $result->num_rows > 0) {
+                $servisor = $result->fetch_assoc();
+            }
+            $stmt->close();
+        } else {
+            // Old schema
+            $stmt = $conn->prepare('SELECT *, service_type as service_category, 0 as base_fee FROM servisors WHERE id = ? AND is_approved = 1');
+            $stmt->bind_param('i', $servisor_id);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            if ($result && $result->num_rows > 0) {
+                $servisor = $result->fetch_assoc();
+                $servisor['area'] = 'Jaffna'; // Default area for old schema
+                $servisor['base_fee'] = 2500; // Default fee
+                $servisor['rating'] = 0;
+                $servisor['total_reviews'] = 0;
+            }
+            $stmt->close();
         }
-        $stmt->close();
     }
     
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -41,36 +60,74 @@
             $message = '<div class="card" style="color:red;">Please enter a valid email address.</div>';
         } else {
             // Get servisor details for booking
-            $stmt = $conn->prepare('SELECT sd.*, sc.name as service_category FROM servisor_details sd JOIN service_categories sc ON sd.service_category = sc.name WHERE sd.id = ? AND sd.is_approved = 1');
-            $stmt->bind_param('i', $selected_servisor_id);
-            $stmt->execute();
-            $result = $stmt->get_result();
-            
-            if ($result && $result->num_rows > 0) {
-                $selected_servisor = $result->fetch_assoc();
+            // Check if new schema exists
+            $table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
+            if ($table_check && $table_check->num_rows > 0) {
+                // New schema
+                $stmt = $conn->prepare('SELECT * FROM servisor_details WHERE id = ? AND is_approved = 1');
+                $stmt->bind_param('i', $selected_servisor_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
                 
-                // Store booking data in session for payment processing
-                $_SESSION['booking_data'] = [
-                    'servisor_id' => $selected_servisor_id,
-                    'servisor_name' => $selected_servisor['name'],
-                    'service_name' => $selected_servisor['service_category'],
-                    'customer_name' => $customer_name,
-                    'customer_phone' => $customer_phone,
-                    'customer_email' => $customer_email,
-                    'customer_address' => $customer_address,
-                    'booking_date' => $booking_date,
-                    'booking_time' => $booking_time,
-                    'service_description' => $service_description,
-                    'estimated_cost' => $selected_servisor['base_fee']
-                ];
-                
-                // Redirect to payment page
-                header('Location: payment.php');
-                exit();
+                if ($result && $result->num_rows > 0) {
+                    $selected_servisor = $result->fetch_assoc();
+                    
+                    // Store booking data in session for payment processing
+                    $_SESSION['booking_data'] = [
+                        'servisor_id' => $selected_servisor_id,
+                        'servisor_name' => $selected_servisor['name'],
+                        'service_name' => $selected_servisor['service_category'],
+                        'customer_name' => $customer_name,
+                        'customer_phone' => $customer_phone,
+                        'customer_email' => $customer_email,
+                        'customer_address' => $customer_address,
+                        'booking_date' => $booking_date,
+                        'booking_time' => $booking_time,
+                        'service_description' => $service_description,
+                        'estimated_cost' => $selected_servisor['base_fee']
+                    ];
+                    
+                    // Redirect to payment page
+                    header('Location: payment.php');
+                    exit();
+                } else {
+                    $message = '<div class="card" style="color:red;">Selected servisor is not available.</div>';
+                }
+                $stmt->close();
             } else {
-                $message = '<div class="card" style="color:red;">Selected servisor is not available.</div>';
+                // Old schema fallback
+                $stmt = $conn->prepare('SELECT *, service_type as service_category FROM servisors WHERE id = ? AND is_approved = 1');
+                $stmt->bind_param('i', $selected_servisor_id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                
+                if ($result && $result->num_rows > 0) {
+                    $selected_servisor = $result->fetch_assoc();
+                    $selected_servisor['base_fee'] = 2500; // Default fee
+                    
+                    // Store booking data in session for payment processing
+                    $_SESSION['booking_data'] = [
+                        'servisor_id' => $selected_servisor_id,
+                        'servisor_name' => $selected_servisor['name'],
+                        'service_name' => $selected_servisor['service_category'],
+                        'customer_name' => $customer_name,
+                        'customer_phone' => $customer_phone,
+                        'customer_email' => $customer_email,
+                        'customer_address' => $customer_address,
+                        'booking_date' => $booking_date,
+                        'booking_time' => $booking_time,
+                        'service_description' => $service_description,
+                        'estimated_cost' => $selected_servisor['base_fee']
+                    ];
+                    
+                    // Redirect to payment page
+                    header('Location: payment.php');
+                    exit();
+                } else {
+                    $message = '<div class="card" style="color:red;">Selected servisor is not available.</div>';
+                }
+                $stmt->close();
             }
-            $stmt->close();
         }
     }
     
@@ -120,20 +177,40 @@
         <select id="servisor" name="servisor" required>
             <option value="">Choose a servisor</option>
             <?php
-            $servisors = $conn->query('SELECT sd.* FROM servisor_details sd WHERE sd.is_approved = 1 AND sd.is_active = 1 ORDER BY sd.service_category, sd.name');
-            $current_category = '';
-            while ($row = $servisors->fetch_assoc()) {
-                if ($current_category !== $row['service_category']) {
-                    if ($current_category !== '') echo '</optgroup>';
-                    echo '<optgroup label="' . htmlspecialchars($row['service_category']) . '">';
-                    $current_category = $row['service_category'];
+            // Check if new schema exists
+            $table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
+            if ($table_check && $table_check->num_rows > 0) {
+                // New schema
+                $servisors = $conn->query('SELECT * FROM servisor_details WHERE is_approved = 1 AND is_active = 1 ORDER BY service_category, name');
+                $current_category = '';
+                while ($row = $servisors->fetch_assoc()) {
+                    if ($current_category !== $row['service_category']) {
+                        if ($current_category !== '') echo '</optgroup>';
+                        echo '<optgroup label="' . htmlspecialchars($row['service_category']) . '">';
+                        $current_category = $row['service_category'];
+                    }
+                    $selected = ($servisor_id && $servisor_id == $row['id']) ? 'selected' : '';
+                    $rating_text = $row['rating'] > 0 ? ' - ' . $row['rating'] . '/5' : '';
+                    echo '<option value="' . $row['id'] . '" ' . $selected . '>' . 
+                         htmlspecialchars($row['name'] . ' (' . $row['area'] . ')' . $rating_text) . '</option>';
                 }
-                $selected = ($servisor_id && $servisor_id == $row['id']) ? 'selected' : '';
-                $rating_text = $row['rating'] > 0 ? ' - ' . $row['rating'] . '/5' : '';
-                echo '<option value="' . $row['id'] . '" ' . $selected . '>' . 
-                     htmlspecialchars($row['name'] . ' (' . $row['area'] . ')' . $rating_text) . '</option>';
+                if ($current_category !== '') echo '</optgroup>';
+            } else {
+                // Old schema fallback
+                $servisors = $conn->query('SELECT *, service_type as service_category FROM servisors WHERE is_approved = 1 ORDER BY service_type, name');
+                $current_category = '';
+                while ($row = $servisors->fetch_assoc()) {
+                    if ($current_category !== $row['service_category']) {
+                        if ($current_category !== '') echo '</optgroup>';
+                        echo '<optgroup label="' . htmlspecialchars($row['service_category']) . '">';
+                        $current_category = $row['service_category'];
+                    }
+                    $selected = ($servisor_id && $servisor_id == $row['id']) ? 'selected' : '';
+                    echo '<option value="' . $row['id'] . '" ' . $selected . '>' . 
+                         htmlspecialchars($row['name'] . ' (Jaffna)') . '</option>';
+                }
+                if ($current_category !== '') echo '</optgroup>';
             }
-            if ($current_category !== '') echo '</optgroup>';
             ?>
         </select>
         

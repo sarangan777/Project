@@ -1,34 +1,47 @@
 <?php
 include 'includes/header.php';
 include 'includes/db.php';
-session_start();
 
 $login_message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = trim($_POST['password']);
+    
     // Default admin credentials
     $admin_username = 'admin@gmail.com';
     $admin_password = '12345678';
+    
     if ($username === $admin_username && $password === $admin_password) {
         $_SESSION['user_id'] = 1;
+        $_SESSION['user_name'] = 'Admin';
         $_SESSION['is_admin'] = 1;
         $login_message = '<div class="card" style="color:green;">Admin login successful! Redirecting to dashboard...</div>';
-        echo '<script>setTimeout(function(){ window.location.href = "admin/dashboard.php"; }, 1500);</script>';
+        echo '<script>setTimeout(function(){ window.location.href = "admin/dashboard.php"; }, 2000);</script>';
     } else {
         // Check for regular user in database
         $stmt = $conn->prepare('SELECT id, password, is_admin FROM users WHERE email = ?');
         $stmt->bind_param('s', $username);
         $stmt->execute();
-        $stmt->store_result();
-        if ($stmt->num_rows > 0) {
-            $stmt->bind_result($id, $hashed_password, $is_admin);
-            $stmt->fetch();
+        $result = $stmt->get_result();
+        
+        if ($result && $result->num_rows > 0) {
+            $user = $result->fetch_assoc();
+            $id = $user['id'];
+            $hashed_password = $user['password'];
+            $is_admin = $user['is_admin'];
+            
             if (password_verify($password, $hashed_password)) {
                 $_SESSION['user_id'] = $id;
+                $_SESSION['user_name'] = $username;
                 $_SESSION['is_admin'] = $is_admin;
-                $login_message = '<div class="card" style="color:green;">Login successful! Redirecting to home...</div>';
-                echo '<script>setTimeout(function(){ window.location.href = "index.php"; }, 1500);</script>';
+                
+                if ($is_admin == 1) {
+                    $login_message = '<div class="card" style="color:green;">Admin login successful! Redirecting to dashboard...</div>';
+                    echo '<script>setTimeout(function(){ window.location.href = "admin/dashboard.php"; }, 2000);</script>';
+                } else {
+                    $login_message = '<div class="card" style="color:green;">Login successful! Redirecting to home...</div>';
+                    echo '<script>setTimeout(function(){ window.location.href = "index.php"; }, 2000);</script>';
+                }
             } else {
                 $login_message = '<div class="card" style="color:red;">Invalid password.</div>';
             }

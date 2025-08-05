@@ -126,14 +126,36 @@ function getAreas($conn) {
 
 // Get payment methods
 function getPaymentMethods($conn) {
-    $result = $conn->query("SELECT * FROM payment_methods WHERE is_active = 1 ORDER BY name");
-    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    // Check if new schema table exists
+    $table_check = $conn->query("SHOW TABLES LIKE 'payment_methods'");
+    if ($table_check && $table_check->num_rows > 0) {
+        $result = $conn->query("SELECT * FROM payment_methods WHERE is_active = 1 ORDER BY name");
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    } else {
+        // Return default payment methods for old schema
+        return [
+            ['id' => 1, 'name' => 'Cash on Delivery', 'code' => 'COD', 'description' => 'Pay cash when service is completed'],
+            ['id' => 2, 'name' => 'Credit/Debit Card', 'code' => 'CARD', 'description' => 'Pay online using credit or debit card']
+        ];
+    }
 }
 
 // Get booking statuses
 function getBookingStatuses($conn) {
-    $result = $conn->query("SELECT * FROM booking_statuses ORDER BY id");
-    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    // Check if new schema table exists
+    $table_check = $conn->query("SHOW TABLES LIKE 'booking_statuses'");
+    if ($table_check && $table_check->num_rows > 0) {
+        $result = $conn->query("SELECT * FROM booking_statuses ORDER BY id");
+        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
+    } else {
+        // Return default statuses for old schema
+        return [
+            ['id' => 1, 'name' => 'Pending', 'color' => '#FFA500'],
+            ['id' => 2, 'name' => 'Confirmed', 'color' => '#007BFF'],
+            ['id' => 3, 'name' => 'Completed', 'color' => '#28A745'],
+            ['id' => 4, 'name' => 'Cancelled', 'color' => '#DC3545']
+        ];
+    }
 }
 
 // Log admin activity

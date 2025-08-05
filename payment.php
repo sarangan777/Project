@@ -29,45 +29,64 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Generate booking number
         $bookingNumber = generateBookingNumber();
         
-        // Insert booking
-        $stmt = $conn->prepare("INSERT INTO bookings (booking_number, user_id, servisor_id, customer_name, customer_phone, customer_email, customer_address, booking_date, booking_time, service_description, estimated_cost, payment_method_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
-        
-        $userId = $_SESSION['user_id'] ?? null;
-        $stmt->bind_param('siissssssdi', 
-            $bookingNumber,
-            $userId,
-            $bookingData['servisor_id'],
-            $bookingData['customer_name'],
-            $bookingData['customer_phone'],
-            $bookingData['customer_email'],
-            $bookingData['customer_address'],
-            $bookingData['booking_date'],
-            $bookingData['booking_time'],
-            $bookingData['service_description'],
-            $bookingData['estimated_cost'],
-            $paymentMethodId
-        );
+        // Insert booking - check if new schema tables exist
+        $table_check = $conn->query("SHOW TABLES LIKE 'booking_statuses'");
+        if ($table_check && $table_check->num_rows > 0) {
+            // New schema with normalized tables
+            $stmt = $conn->prepare("INSERT INTO bookings (booking_number, user_id, servisor_id, customer_name, customer_phone, customer_email, customer_address, booking_date, booking_time, service_description, estimated_cost, payment_method_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
+            
+            $userId = $_SESSION['user_id'] ?? null;
+            $stmt->bind_param('siissssssdi', 
+                $bookingNumber,
+                $userId,
+                $bookingData['servisor_id'],
+                $bookingData['customer_name'],
+                $bookingData['customer_phone'],
+                $bookingData['customer_email'],
+                $bookingData['customer_address'],
+                $bookingData['booking_date'],
+                $bookingData['booking_time'],
+                $bookingData['service_description'],
+                $bookingData['estimated_cost'],
+                $paymentMethodId
+            );
+        } else {
+            // Old schema - fallback
+            $stmt = $conn->prepare("INSERT INTO bookings (user_id, servisor_id, customer_name, customer_phone, customer_address, booking_date, booking_time, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
+            
+            $userId = $_SESSION['user_id'] ?? null;
+            $stmt->bind_param('iissssss', 
+                $userId,
+                $bookingData['servisor_id'],
+                $bookingData['customer_name'],
+                $bookingData['customer_phone'],
+                $bookingData['customer_address'],
+                $bookingData['booking_date'],
+                $bookingData['booking_time'],
+                $bookingData['service_description']
+            );
+        }
         
         if ($stmt->execute()) {
             $bookingId = $stmt->insert_id;
             $stmt->close();
             
             // Handle different payment methods
-            if ($paymentMethod['code'] === 'COD') {
+            if (isset($paymentMethod['code']) && $paymentMethod['code'] === 'COD') {
                 // Cash on Delivery - booking is complete
                 $_SESSION['booking_success'] = [
-                    'booking_number' => $bookingNumber,
+                    'booking_number' => $bookingNumber ?? 'BK' . $bookingId,
                     'payment_method' => 'Cash on Delivery',
                     'message' => 'Your booking has been confirmed! Pay cash when the service is completed.'
                 ];
                 unset($_SESSION['booking_data']);
                 header('Location: booking_success.php');
                 exit();
-            } elseif ($paymentMethod['code'] === 'CARD') {
+            } elseif (isset($paymentMethod['code']) && $paymentMethod['code'] === 'CARD') {
                 // Redirect to card payment
                 $_SESSION['payment_data'] = [
                     'booking_id' => $bookingId,
-                    'booking_number' => $bookingNumber,
+                    'booking_number' => $bookingNumber ?? 'BK' . $bookingId,
                     'amount' => $bookingData['estimated_cost']
                 ];
                 header('Location: card_payment.php');
@@ -75,8 +94,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             } else {
                 // Other payment methods
                 $_SESSION['booking_success'] = [
-                    'booking_number' => $bookingNumber,
-                    'payment_method' => $paymentMethod['name'],
+                    'booking_number' => $bookingNumber ?? 'BK' . $bookingId,
+                    'payment_method' => $paymentMethod['name'] ?? 'Cash on Delivery',
                     'message' => 'Your booking has been confirmed! Payment instructions will be sent to you.'
                 ];
                 unset($_SESSION['booking_data']);
