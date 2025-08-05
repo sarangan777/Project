@@ -42,7 +42,7 @@ if (isset($_GET['id'])) {
         if (!empty($servisor['area'])) echo '<p><strong>Area:</strong> ' . htmlspecialchars($servisor['area']) . '</p>';
         if (!empty($servisor['fee'])) echo '<p><strong>Fees:</strong> ' . htmlspecialchars($servisor['fee']) . '</p>';
         if (!empty($servisor['rating'])) echo '<p><strong>Rating:</strong> ' . htmlspecialchars($servisor['rating']) . '/5</p>';
-        echo '<a href="add_to_cart.php?servisor_id=' . $servisor['id'] . '" class="btn mt-2">Add to Cart</a>';
+        echo '<a href="booking.php?servisor_id=' . $servisor['id'] . '" class="btn mt-2">Book Now</a>';
         echo '</div>';
     } else {
         echo '<div class="card">Servisor not found.</div>';

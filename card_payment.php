@@ -5,7 +5,8 @@ include 'includes/db.php';
 
 // Check if payment data exists
 if (!isset($_SESSION['payment_data'])) {
-    redirectWithMessage('services.php', 'Invalid payment session.', 'error');
+    header('Location: services.php');
+    exit();
 }
 
 $paymentData = $_SESSION['payment_data'];
@@ -26,17 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $transactionId = 'TXN' . time() . rand(1000, 9999);
         
-        // Insert payment transaction
-        $stmt = $conn->prepare("INSERT INTO payment_transactions (booking_id, transaction_id, amount, payment_method_id, payment_status, payment_date) VALUES (?, ?, ?, 2, 'completed', NOW())");
-        $stmt->bind_param('isd', $paymentData['booking_id'], $transactionId, $paymentData['amount']);
+        // Update booking status to confirmed
+        $stmt = $conn->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
+        $stmt->bind_param('i', $paymentData['booking_id']);
         
         if ($stmt->execute()) {
-            $stmt->close();
-            
-            // Update booking status to confirmed
-            $stmt = $conn->prepare("UPDATE bookings SET status_id = 2 WHERE id = ?");
-            $stmt->bind_param('i', $paymentData['booking_id']);
-            $stmt->execute();
             $stmt->close();
             
             $_SESSION['booking_success'] = [
@@ -91,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         
         <button type="submit" class="btn" style="width:100%;">
-            <i class="fa fa-credit-card"></i> Pay <?php echo formatCurrency($paymentData['amount']); ?>
+            <i class="fa fa-credit-card"></i> Pay LKR <?php echo number_format($paymentData['amount'], 2); ?>
         </button>
         
         <a href="payment.php" class="btn btn-secondary" style="width:100%;text-align:center;margin-top:0.5rem;">

@@ -27,12 +27,15 @@
                     <!-- User is logged in -->
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
                         <li><a href="admin/dashboard.php" <?php echo (strpos($_SERVER['PHP_SELF'], 'admin/') !== false) ? 'class="active"' : ''; ?>>Admin Panel</a></li>
-                        <li><a href="profile.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'class="active"' : ''; ?>>Profile</a></li>
                     <?php else: ?>
-                        <li><a href="profile.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'class="active"' : ''; ?>>My Profile</a></li>
                         <li><a href="my_bookings.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_bookings.php') ? 'class="active"' : ''; ?>>My Bookings</a></li>
                     <?php endif; ?>
-                    <li><a href="logout.php" style="background:#dc3545;border-radius:0.5rem;padding:0.4rem 0.8rem;">Logout</a></li>
+                    <li><a href="profile.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'class="active"' : ''; ?>>
+                        <i class="fa fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Profile'); ?>
+                    </a></li>
+                    <li><a href="logout.php" style="background:#dc3545;border-radius:0.5rem;padding:0.4rem 0.8rem;">
+                        <i class="fa fa-sign-out-alt"></i> Logout
+                    </a></li>
                 <?php else: ?>
                     <!-- User is not logged in -->
                     <li><a href="login.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'login.php') ? 'class="active"' : ''; ?>>Login</a></li>

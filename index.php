@@ -4,8 +4,13 @@
     <section class="hero">
         <h1>Welcome to Jaffna Services Booking</h1>
         <p>Find trusted servisors in Jaffna for all your home and business needs.</p>
-        <a href="login.php" class="btn">Login</a>
-        <a href="signup.php" class="btn btn-secondary">Sign Up</a>
+        <?php if (!isset($_SESSION['user_id'])): ?>
+            <a href="login.php" class="btn">Login</a>
+            <a href="signup.php" class="btn btn-secondary">Sign Up</a>
+        <?php else: ?>
+            <a href="services.php" class="btn">Browse Services</a>
+            <a href="my_bookings.php" class="btn btn-secondary">My Bookings</a>
+        <?php endif; ?>
     </section>
     <section class="featured-services">
         <h2>Featured Services</h2>

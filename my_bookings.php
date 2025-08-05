@@ -12,17 +12,21 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 // Fetch user's bookings
-$query = "SELECT b.*, s.name as servisor_name, s.phone as servisor_phone, s.service_type 
-          FROM bookings b 
-          JOIN servisors s ON b.servisor_id = s.id 
-          WHERE b.user_id = ? OR b.customer_phone = (SELECT phone FROM users WHERE id = ?)
-          ORDER BY b.created_at DESC";
+$stmt = $conn->prepare("SELECT b.*, s.name as servisor_name, s.phone as servisor_phone, s.service_type 
+                        FROM bookings b 
+                        JOIN servisors s ON b.servisor_id = s.id 
+                        WHERE b.user_id = ?
+                        ORDER BY b.created_at DESC");
 
-$stmt = $conn->prepare($query);
-$stmt->bind_param('ii', $user_id, $user_id);
-$stmt->execute();
-$bookings = $stmt->get_result();
-$stmt->close();
+if ($stmt) {
+    $stmt->bind_param('i', $user_id);
+    $stmt->execute();
+    $bookings = $stmt->get_result();
+    $stmt->close();
+} else {
+    $bookings = null;
+    $error_message = "Database error: " . $conn->error;
+}
 ?>
 
 <main class="container">
@@ -31,6 +35,12 @@ $stmt->close();
             <h1><i class="fa fa-calendar-alt"></i> My Bookings</h1>
             <p>Track and manage your service bookings</p>
         </div>
+        
+        <?php if (isset($error_message)): ?>
+            <div class="card" style="color: red; text-align: center;">
+                <?php echo htmlspecialchars($error_message); ?>
+            </div>
+        <?php endif; ?>
         
         <?php if ($bookings && $bookings->num_rows > 0): ?>
             <div style="display: grid; gap: 1.5rem;">

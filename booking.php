@@ -11,7 +11,8 @@ error_reporting(E_ALL);
 // Check if servisor_id is provided
 $servisor_id = isset($_GET['servisor_id']) ? intval($_GET['servisor_id']) : 0;
 if ($servisor_id <= 0) {
-    redirectWithMessage('services.php', 'Invalid servisor selected.', 'error');
+    header('Location: services.php');
+    exit();
 }
 
 // Fetch servisor details
@@ -48,7 +49,8 @@ if ($table_check && $table_check->num_rows > 0) {
 }
 
 if (!$servisor) {
-    redirectWithMessage('services.php', 'Servisor not found or not available.', 'error');
+    header('Location: services.php');
+    exit();
 }
 
 // Fetch user data if logged in
@@ -80,119 +82,61 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $selected_servisor_id = intval($_POST['servisor'] ?? 0);
     
     // Validation
-    $requiredFields = ['name', 'phone', 'address', 'date', 'time', 'message', 'servisor'];
-    foreach ($requiredFields as $field) {
-        if (empty($_POST[$field])) {
-            $message = '<div class="card" style="color:red;">Missing required field: ' . htmlspecialchars($field) . '</div>';
-            error_log("Validation failed: Missing field $field");
-            break;
-        }
-    }
-
-    if (!isset($message) && !isValidPhone($customer_phone)) {
+    if (empty($customer_name) || empty($customer_phone) || empty($customer_address) || 
+        empty($booking_date) || empty($booking_time) || empty($service_description) || 
+        $selected_servisor_id <= 0) {
+        $message = '<div class="card" style="color:red;">All fields are required.</div>';
+    } elseif (!isValidPhone($customer_phone)) {
         $message = '<div class="card" style="color:red;">Invalid phone number format. Use +94 or 0 followed by 9 digits (e.g., 0771234567).</div>';
-        error_log("Validation failed: Invalid phone number $customer_phone");
-    } elseif (!isset($message) && !empty($customer_email) && !isValidEmail($customer_email)) {
+    } elseif (!empty($customer_email) && !isValidEmail($customer_email)) {
         $message = '<div class="card" style="color:red;">Invalid email address.</div>';
-        error_log("Validation failed: Invalid email $customer_email");
-    } elseif (!isset($message) && !DateTime::createFromFormat('Y-m-d', $booking_date)) {
-        $message = '<div class="card" style="color:red;">Invalid date format. Use YYYY-MM-DD.</div>';
-        error_log("Validation failed: Invalid date $booking_date");
-    } elseif (!isset($message) && !DateTime::createFromFormat('H:i', $booking_time)) {
-        $message = '<div class="message error">Invalid time format. Use HH:MM.</div>';
-        error_log("Validation failed: Invalid time $booking_time");
-    }
-
-    if (!isset($message)) {
-        // Convert time format for database storage
-        $booking_time_formatted = $booking_time . ':00'; // Add seconds
+    } else {
+        // Generate booking number
+        $bookingNumber = generateBookingNumber();
         
-        // Get servisor details for booking
-        $table_check = $conn->query("SHOW TABLES LIKE 'servisor_details'");
-        if ($table_check && $table_check->num_rows > 0) {
-            $stmt = $conn->prepare('SELECT * FROM servisor_details WHERE id = ? AND is_approved = 1');
-            if (!$stmt) {
-                $message = '<div class="card" style="color:red;">Database error: ' . mysqli_error($conn) . '</div>';
-                error_log("Database error: " . mysqli_error($conn));
-            } else {
-                $stmt->bind_param('i', $selected_servisor_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                
-                if ($result && $result->num_rows > 0) {
-                    $selected_servisor = $result->fetch_assoc();
-                    
-                    // Store booking data in session
-                    $_SESSION['booking_data'] = [
-                        'servisor_id' => $selected_servisor_id,
-                        'servisor_name' => $selected_servisor['name'],
-                        'service_name' => $selected_servisor['service_category'],
-                        'customer_name' => $customer_name,
-                        'customer_phone' => $customer_phone,
-                        'customer_email' => $customer_email ?: null,
-                        'customer_address' => $customer_address,
-                        'booking_date' => $booking_date,
-                        'booking_time' => $booking_time_formatted,
-                        'service_description' => $service_description,
-                        'estimated_cost' => $selected_servisor['base_fee']
-                    ];
-                    
-                    error_log("Booking data stored in session: " . json_encode($_SESSION['booking_data']));
-                    header('Location: payment.php');
-                    exit();
-                } else {
-                    $message = '<div class="card" style="color:red;">Selected servisor is not available.</div>';
-                    error_log("Validation failed: Servisor ID $selected_servisor_id not found");
-                }
-                $stmt->close();
-            }
+        // Insert booking
+        $stmt = $conn->prepare("INSERT INTO bookings (user_id, servisor_id, customer_name, customer_phone, customer_address, booking_date, booking_time, message, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending')");
+        
+        $userId = $_SESSION['user_id'] ?? null;
+        $stmt->bind_param('iissssss', 
+            $userId,
+            $selected_servisor_id,
+            $customer_name,
+            $customer_phone,
+            $customer_address,
+            $booking_date,
+            $booking_time,
+            $service_description
+        );
+        
+        if ($stmt->execute()) {
+            $bookingId = $stmt->insert_id;
+            $stmt->close();
+            
+            // Store booking data for payment
+            $_SESSION['booking_data'] = [
+                'booking_id' => $bookingId,
+                'servisor_id' => $selected_servisor_id,
+                'servisor_name' => $servisor['name'],
+                'service_name' => $servisor['service_category'] ?? $servisor['service_type'],
+                'customer_name' => $customer_name,
+                'customer_phone' => $customer_phone,
+                'customer_email' => $customer_email ?: null,
+                'customer_address' => $customer_address,
+                'booking_date' => $booking_date,
+                'booking_time' => $booking_time,
+                'service_description' => $service_description,
+                'estimated_cost' => $servisor['base_fee'] ?? 2500
+            ];
+            
+            header('Location: payment.php');
+            exit();
         } else {
-            $stmt = $conn->prepare('SELECT *, service_type as service_category FROM servisors WHERE id = ? AND is_approved = 1');
-            if (!$stmt) {
-                $message = '<div class="card" style="color:red;">Database error: ' . mysqli_error($conn) . '</div>';
-                error_log("Database error: " . mysqli_error($conn));
-            } else {
-                $stmt->bind_param('i', $selected_servisor_id);
-                $stmt->execute();
-                $result = $stmt->get_result();
-                
-                if ($result && $result->num_rows > 0) {
-                    $selected_servisor = $result->fetch_assoc();
-                    $selected_servisor['base_fee'] = 2500;
-                    
-                    $_SESSION['booking_data'] = [
-                        'servisor_id' => $selected_servisor_id,
-                        'servisor_name' => $selected_servisor['name'],
-                        'service_name' => $selected_servisor['service_category'],
-                        'customer_name' => $customer_name,
-                        'customer_phone' => $customer_phone,
-                        'customer_email' => $customer_email ?: null,
-                        'customer_address' => $customer_address,
-                        'booking_date' => $booking_date,
-                        'booking_time' => $booking_time_formatted,
-                        'service_description' => $service_description,
-                        'estimated_cost' => $selected_servisor['base_fee']
-                    ];
-                    
-                    error_log("Booking data stored in session (old schema): " . json_encode($_SESSION['booking_data']));
-                    header('Location: payment.php');
-                    exit();
-                } else {
-                    $message = '<div class="card" style="color:red;">Selected servisor is not available.</div>';
-                    error_log("Validation failed: Servisor ID $selected_servisor_id not found (old schema)");
-                }
-                $stmt->close();
-            }
+            $message = '<div class="card" style="color:red;">Failed to create booking. Please try again.</div>';
+            $stmt->close();
         }
     }
 }
-
-// Debugging: Uncomment to inspect data
-// var_dump($_POST);
-// var_dump($user_data);
-// var_dump($_SESSION['user_id']);
-// var_dump($message);
-// exit();
 ?>
 
 <main class="container">
