@@ -11,11 +11,20 @@ if (!isset($_SESSION['booking_data'])) {
 
 $bookingData = $_SESSION['booking_data'];
 
-// Default payment methods
-$paymentMethods = [
-    ['id' => 1, 'name' => 'Cash on Delivery', 'code' => 'COD', 'description' => 'Pay cash when service is completed'],
-    ['id' => 2, 'name' => 'Credit/Debit Card', 'code' => 'CARD', 'description' => 'Pay online using credit or debit card']
-];
+// Get payment methods from database
+$paymentMethods = [];
+$result = $conn->query("SELECT * FROM payment_methods WHERE is_active = 1 ORDER BY name");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $paymentMethods[] = $row;
+    }
+} else {
+    // Fallback payment methods
+    $paymentMethods = [
+        ['id' => 1, 'name' => 'Cash on Delivery', 'code' => 'COD', 'description' => 'Pay cash when service is completed'],
+        ['id' => 2, 'name' => 'Credit/Debit Card', 'code' => 'CARD', 'description' => 'Pay online using credit or debit card']
+    ];
+}
 
 $message = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -36,8 +45,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Handle different payment methods
         if ($paymentMethod['code'] === 'COD') {
             // Cash on Delivery - booking is complete
+            // Update booking status to confirmed
+            $stmt = $conn->prepare("UPDATE bookings SET status_id = 2 WHERE id = ?");
+            $stmt->bind_param('i', $bookingData['booking_id']);
+            $stmt->execute();
+            $stmt->close();
+            
             $_SESSION['booking_success'] = [
-                'booking_number' => 'BK' . $bookingData['booking_id'],
+                'booking_number' => $bookingData['booking_number'],
                 'payment_method' => 'Cash on Delivery',
                 'message' => 'Your booking has been confirmed! Pay cash when the service is completed.'
             ];
@@ -48,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Redirect to card payment
             $_SESSION['payment_data'] = [
                 'booking_id' => $bookingData['booking_id'],
-                'booking_number' => 'BK' . $bookingData['booking_id'],
+                'booking_number' => $bookingData['booking_number'],
                 'amount' => $bookingData['estimated_cost']
             ];
             header('Location: card_payment.php');
@@ -56,7 +71,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             // Other payment methods
             $_SESSION['booking_success'] = [
-                'booking_number' => 'BK' . $bookingData['booking_id'],
+                'booking_number' => $bookingData['booking_number'],
                 'payment_method' => $paymentMethod['name'],
                 'message' => 'Your booking has been confirmed! Payment instructions will be sent to you.'
             ];

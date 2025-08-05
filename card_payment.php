@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $transactionId = 'TXN' . time() . rand(1000, 9999);
         
         // Update booking status to confirmed
-        $stmt = $conn->prepare("UPDATE bookings SET status = 'confirmed' WHERE id = ?");
+        $stmt = $conn->prepare("UPDATE bookings SET status_id = 2 WHERE id = ?");
         $stmt->bind_param('i', $paymentData['booking_id']);
         
         if ($stmt->execute()) {

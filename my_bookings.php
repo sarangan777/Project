@@ -12,11 +12,21 @@ if (!isset($_SESSION['user_id'])) {
 $user_id = $_SESSION['user_id'];
 
 // Fetch user's bookings
-$stmt = $conn->prepare("SELECT b.*, s.name as servisor_name, s.phone as servisor_phone, s.service_type 
-                        FROM bookings b 
-                        JOIN servisors s ON b.servisor_id = s.id 
-                        WHERE b.user_id = ?
-                        ORDER BY b.created_at DESC");
+$stmt = $conn->prepare("
+    SELECT 
+        b.*,
+        s.name as servisor_name, 
+        s.phone as servisor_phone,
+        sc.name as service_category,
+        bs.name as status_name,
+        bs.color as status_color
+    FROM bookings b 
+    JOIN servisors s ON b.servisor_id = s.id 
+    JOIN service_categories sc ON s.service_category_id = sc.id
+    JOIN booking_statuses bs ON b.status_id = bs.id
+    WHERE b.user_id = ?
+    ORDER BY b.created_at DESC
+");
 
 if ($stmt) {
     $stmt->bind_param('i', $user_id);
@@ -52,21 +62,15 @@ if ($stmt) {
                                 <?php echo htmlspecialchars($booking['servisor_name']); ?>
                             </h3>
                             <span style="background: #007BFF; color: white; padding: 0.3rem 0.8rem; border-radius: 1rem; font-size: 0.9rem;">
-                                <?php echo htmlspecialchars($booking['service_type']); ?>
+                                <?php echo htmlspecialchars($booking['service_category']); ?>
                             </span>
                         </div>
                         <div style="text-align: right;">
                             <?php
-                            $status_colors = [
-                                'pending' => '#FFA500',
-                                'confirmed' => '#007BFF',
-                                'completed' => '#28A745',
-                                'cancelled' => '#DC3545'
-                            ];
-                            $status_color = $status_colors[$booking['status']] ?? '#6c757d';
+                            $status_color = $booking['status_color'] ?? '#6c757d';
                             ?>
                             <span style="background: <?php echo $status_color; ?>; color: white; padding: 0.4rem 1rem; border-radius: 1rem; font-size: 0.9rem; font-weight: 600;">
-                                <?php echo ucfirst($booking['status']); ?>
+                                <?php echo ucfirst($booking['status_name']); ?>
                             </span>
                         </div>
                     </div>
@@ -96,23 +100,23 @@ if ($stmt) {
                     </div>
                     <?php endif; ?>
                     
-                    <?php if (!empty($booking['message'])): ?>
+                    <?php if (!empty($booking['service_description'])): ?>
                     <div style="margin-bottom: 1rem;">
                         <strong>Service Description:</strong><br>
                         <p style="margin: 0.5rem 0; padding: 1rem; background: #f8f9fa; border-radius: 0.5rem; border-left: 4px solid #007BFF;">
-                            <?php echo nl2br(htmlspecialchars($booking['message'])); ?>
+                            <?php echo nl2br(htmlspecialchars($booking['service_description'])); ?>
                         </p>
                     </div>
                     <?php endif; ?>
                     
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; justify-content: flex-end;">
-                        <?php if ($booking['status'] === 'pending'): ?>
+                        <?php if ($booking['status_name'] === 'Pending'): ?>
                             <button onclick="cancelBooking(<?php echo $booking['id']; ?>)" class="btn" style="background: #dc3545;">
                                 <i class="fa fa-times"></i> Cancel Booking
                             </button>
                         <?php endif; ?>
                         
-                        <?php if ($booking['status'] === 'completed'): ?>
+                        <?php if ($booking['status_name'] === 'Completed'): ?>
                             <a href="review.php?booking_id=<?php echo $booking['id']; ?>" class="btn btn-secondary">
                                 <i class="fa fa-star"></i> Leave Review
                             </a>
