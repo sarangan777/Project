@@ -61,9 +61,9 @@ function displayFlashMessage() {
         $message = $_SESSION['flash_message'];
         $color = $type === 'error' ? 'red' : ($type === 'success' ? 'green' : '#007BFF');
         
-        echo "<div class='card' style='color: $color; background: " . 
+        echo "<div class='message message-$type' style='color: $color; background: " . 
              ($type === 'error' ? '#ffebee' : ($type === 'success' ? '#e8f5e9' : '#e3f0ff')) . 
-             "; margin-bottom: 1rem;'>$message</div>";
+             "; margin-bottom: 1rem; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid $color;'>$message</div>";
         
         unset($_SESSION['flash_message'], $_SESSION['flash_type']);
     }
@@ -126,36 +126,14 @@ function getAreas($conn) {
 
 // Get payment methods
 function getPaymentMethods($conn) {
-    // Check if new schema table exists
-    $table_check = $conn->query("SHOW TABLES LIKE 'payment_methods'");
-    if ($table_check && $table_check->num_rows > 0) {
-        $result = $conn->query("SELECT * FROM payment_methods WHERE is_active = 1 ORDER BY name");
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    } else {
-        // Return default payment methods for old schema
-        return [
-            ['id' => 1, 'name' => 'Cash on Delivery', 'code' => 'COD', 'description' => 'Pay cash when service is completed'],
-            ['id' => 2, 'name' => 'Credit/Debit Card', 'code' => 'CARD', 'description' => 'Pay online using credit or debit card']
-        ];
-    }
+    $result = $conn->query("SELECT * FROM payment_methods WHERE is_active = 1 ORDER BY name");
+    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
 // Get booking statuses
 function getBookingStatuses($conn) {
-    // Check if new schema table exists
-    $table_check = $conn->query("SHOW TABLES LIKE 'booking_statuses'");
-    if ($table_check && $table_check->num_rows > 0) {
-        $result = $conn->query("SELECT * FROM booking_statuses ORDER BY id");
-        return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
-    } else {
-        // Return default statuses for old schema
-        return [
-            ['id' => 1, 'name' => 'Pending', 'color' => '#FFA500'],
-            ['id' => 2, 'name' => 'Confirmed', 'color' => '#007BFF'],
-            ['id' => 3, 'name' => 'Completed', 'color' => '#28A745'],
-            ['id' => 4, 'name' => 'Cancelled', 'color' => '#DC3545']
-        ];
-    }
+    $result = $conn->query("SELECT * FROM booking_statuses ORDER BY id");
+    return $result ? $result->fetch_all(MYSQLI_ASSOC) : [];
 }
 
 // Log admin activity
@@ -175,7 +153,6 @@ function logAdminActivity($conn, $adminId, $action, $tableName = null, $recordId
 
 // Send email notification (basic implementation)
 function sendEmail($to, $subject, $message, $isHTML = true) {
-    // This is a basic implementation. In production, use a proper email library like PHPMailer
     $headers = "From: " . FROM_NAME . " <" . FROM_EMAIL . ">\r\n";
     $headers .= "Reply-To: " . FROM_EMAIL . "\r\n";
     if ($isHTML) {
@@ -202,5 +179,74 @@ function getPaginationData($totalItems, $currentPage = 1, $itemsPerPage = ITEMS_
         'prev_page' => $currentPage - 1,
         'next_page' => $currentPage + 1
     ];
+}
+
+// Get servisor details with all related information
+function getServisorDetails($conn, $servisorId) {
+    $stmt = $conn->prepare("SELECT * FROM servisor_details WHERE id = ?");
+    $stmt->bind_param('i', $servisorId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $servisor = $result->fetch_assoc();
+    $stmt->close();
+    return $servisor;
+}
+
+// Get booking details with all related information
+function getBookingDetails($conn, $bookingId) {
+    $stmt = $conn->prepare("SELECT * FROM booking_details WHERE id = ?");
+    $stmt->bind_param('i', $bookingId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+    $booking = $result->fetch_assoc();
+    $stmt->close();
+    return $booking;
+}
+
+// Update servisor rating based on reviews
+function updateServisorRating($conn, $servisorId) {
+    $stmt = $conn->prepare("
+        UPDATE servisors 
+        SET 
+            rating = (SELECT AVG(rating) FROM reviews WHERE servisor_id = ? AND is_approved = 1),
+            total_reviews = (SELECT COUNT(*) FROM reviews WHERE servisor_id = ? AND is_approved = 1)
+        WHERE id = ?
+    ");
+    $stmt->bind_param('iii', $servisorId, $servisorId, $servisorId);
+    $stmt->execute();
+    $stmt->close();
+}
+
+// Check if table exists
+function tableExists($conn, $tableName) {
+    $result = $conn->query("SHOW TABLES LIKE '$tableName'");
+    return $result && $result->num_rows > 0;
+}
+
+// Get dashboard statistics
+function getDashboardStats($conn) {
+    $stats = [];
+    
+    // Total servisors
+    $result = $conn->query("SELECT COUNT(*) as count FROM servisors WHERE is_approved = 1");
+    $stats['total_servisors'] = $result->fetch_assoc()['count'];
+    
+    // Total bookings
+    $result = $conn->query("SELECT COUNT(*) as count FROM bookings");
+    $stats['total_bookings'] = $result->fetch_assoc()['count'];
+    
+    // Today's bookings
+    $result = $conn->query("SELECT COUNT(*) as count FROM bookings WHERE DATE(created_at) = CURDATE()");
+    $stats['todays_bookings'] = $result->fetch_assoc()['count'];
+    
+    // Pending approvals
+    $result = $conn->query("SELECT COUNT(*) as count FROM servisors WHERE is_approved = 0");
+    $stats['pending_approvals'] = $result->fetch_assoc()['count'];
+    
+    // Monthly revenue
+    $result = $conn->query("SELECT COALESCE(SUM(final_cost), 0) as revenue FROM bookings WHERE status_id = 4 AND MONTH(created_at) = MONTH(CURDATE()) AND YEAR(created_at) = YEAR(CURDATE())");
+    $stats['monthly_revenue'] = $result->fetch_assoc()['revenue'];
+    
+    return $stats;
 }
 ?>

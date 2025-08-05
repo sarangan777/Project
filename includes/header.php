@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaffna Services Booking</title>
+    <title><?php echo isset($page_title) ? $page_title . ' - ' : ''; ?>Jaffna Services</title>
     <link rel="stylesheet" href="assets/css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="icon" type="image/x-icon" href="assets/img/favicon.ico">
 </head>
 <body>
     <nav class="navbar">
@@ -18,17 +19,29 @@
                 <i class="fa fa-bars"></i>
             </div>
             <ul class="nav-links" id="navLinks">
-                <li><a href="index.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'class="active"' : ''; ?>>Home</a></li>
-                <li><a href="services.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'services.php') ? 'class="active"' : ''; ?>>Services</a></li>
-                <li><a href="about.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'about.php') ? 'class="active"' : ''; ?>>About</a></li>
-                <li><a href="contact.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'contact.php') ? 'class="active"' : ''; ?>>Contact</a></li>
+                <li><a href="index.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'index.php') ? 'class="active"' : ''; ?>>
+                    <i class="fa fa-home"></i> Home
+                </a></li>
+                <li><a href="services.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'services.php') ? 'class="active"' : ''; ?>>
+                    <i class="fa fa-list"></i> Services
+                </a></li>
+                <li><a href="about.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'about.php') ? 'class="active"' : ''; ?>>
+                    <i class="fa fa-info-circle"></i> About
+                </a></li>
+                <li><a href="contact.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'contact.php') ? 'class="active"' : ''; ?>>
+                    <i class="fa fa-envelope"></i> Contact
+                </a></li>
                 
                 <?php if (isset($_SESSION['user_id'])): ?>
                     <!-- User is logged in -->
                     <?php if (isset($_SESSION['is_admin']) && $_SESSION['is_admin'] == 1): ?>
-                        <li><a href="admin/dashboard.php" <?php echo (strpos($_SERVER['PHP_SELF'], 'admin/') !== false) ? 'class="active"' : ''; ?>>Admin Panel</a></li>
+                        <li><a href="admin/dashboard.php" <?php echo (strpos($_SERVER['PHP_SELF'], 'admin/') !== false) ? 'class="active"' : ''; ?>>
+                            <i class="fa fa-tachometer-alt"></i> Admin Panel
+                        </a></li>
                     <?php else: ?>
-                        <li><a href="my_bookings.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_bookings.php') ? 'class="active"' : ''; ?>>My Bookings</a></li>
+                        <li><a href="my_bookings.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'my_bookings.php') ? 'class="active"' : ''; ?>>
+                            <i class="fa fa-calendar-alt"></i> My Bookings
+                        </a></li>
                     <?php endif; ?>
                     <li><a href="profile.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'profile.php') ? 'class="active"' : ''; ?>>
                         <i class="fa fa-user"></i> <?php echo htmlspecialchars($_SESSION['user_name'] ?? 'Profile'); ?>
@@ -38,8 +51,12 @@
                     </a></li>
                 <?php else: ?>
                     <!-- User is not logged in -->
-                    <li><a href="login.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'login.php') ? 'class="active"' : ''; ?>>Login</a></li>
-                    <li><a href="signup.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'signup.php') ? 'class="active"' : ''; ?>>Sign Up</a></li>
+                    <li><a href="login.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'login.php') ? 'class="active"' : ''; ?>>
+                        <i class="fa fa-sign-in-alt"></i> Login
+                    </a></li>
+                    <li><a href="signup.php" <?php echo (basename($_SERVER['PHP_SELF']) == 'signup.php') ? 'class="active"' : ''; ?>>
+                        <i class="fa fa-user-plus"></i> Sign Up
+                    </a></li>
                 <?php endif; ?>
             </ul>
         </div>
