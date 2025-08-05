@@ -1,12 +1,13 @@
 <?php
-// Database connection
-$host = 'localhost';
-$user = 'root';
-$pass = '';
-$db = 'service';
+// Include configuration and functions
+require_once 'config.php';
+require_once 'functions.php';
 
-$conn = new mysqli($host, $user, $pass, $db);
-if ($conn->connect_error) {
-    die('Connection failed: ' . $conn->connect_error);
+// Get database connection
+$conn = getDBConnection();
+
+// Start session if not already started
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
 ?> 
