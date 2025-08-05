@@ -1,0 +1,356 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+body {
+    font-family: 'Poppins', 'Inter', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #f8f9fa;
+    color: #222;
+}
+
+.navbar {
+    background: #007BFF;
+    color: #fff;
+    padding: 0.7rem 0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.navbar .container {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    gap: 2.5rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+.logo {
+    font-size: 1.7rem;
+    font-weight: 600;
+    color: #fff;
+    text-decoration: none;
+    letter-spacing: 1px;
+}
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin: 0;
+    padding: 0;
+}
+.nav-links li a {
+    color: #fff;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 1.05rem;
+    transition: color 0.2s;
+    border-radius: 4px;
+    padding: 0.3rem 0.8rem;
+}
+.nav-links li a:hover, .nav-links li a.active {
+    background: #0056b3;
+    color: #fff;
+}
+
+.hero {
+    background: #007BFF;
+    color: #fff;
+    padding: 3rem 1rem 2.5rem 1rem;
+    border-radius: 0 0 2rem 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 24px rgba(0,123,255,0.08);
+}
+.hero h1 {
+    font-size: 2.5rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.hero p {
+    font-size: 1.2rem;
+    margin-bottom: 2rem;
+}
+.hero .btn {
+    font-size: 1.1rem;
+    padding: 0.9rem 2.2rem;
+    font-weight: 600;
+    border-radius: 2rem;
+    margin-top: 1rem;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem;
+}
+
+.services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+    justify-content: center;
+}
+.card {
+    background: #fff;
+    border-radius: 1.2rem;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.08), 0 1.5px 4px rgba(0,0,0,0.04);
+    padding: 2rem 1.5rem 1.5rem 1.5rem;
+    min-width: 220px;
+    max-width: 320px;
+    flex: 1 1 260px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    transition: box-shadow 0.2s, transform 0.2s;
+    margin-bottom: 0.5rem;
+    position: relative;
+}
+.card:hover {
+    box-shadow: 0 8px 32px rgba(0,123,255,0.16), 0 3px 8px rgba(0,0,0,0.08);
+    transform: translateY(-4px) scale(1.03);
+}
+.card i.fa {
+    color: #007BFF;
+    margin-bottom: 0.7rem;
+    font-size: 2.2rem;
+}
+.card h3 {
+    margin: 0.5rem 0 0.3rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+}
+.card span {
+    margin-bottom: 0.5rem;
+    background: #e3f0ff;
+    color: #007BFF;
+    padding: 0.2rem 0.8rem;
+    border-radius: 1rem;
+    font-size: 0.95em;
+    font-weight: 500;
+    display: inline-block;
+}
+.card p {
+    color: #444;
+    font-size: 1.05rem;
+    margin: 0.5rem 0 0 0;
+    text-align: center;
+}
+
+.btn {
+    background: #007BFF;
+    color: #fff;
+    border: none;
+    padding: 0.7rem 1.7rem;
+    border-radius: 2rem;
+    font-size: 1.05rem;
+    cursor: pointer;
+    margin: 0.5rem 0.5rem 0.5rem 0;
+    transition: background 0.2s, box-shadow 0.2s;
+    text-decoration: none;
+    display: inline-block;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+}
+.btn:hover, .btn:focus {
+    background: #0056b3;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(0,123,255,0.16);
+}
+.btn-secondary {
+    background: #fff;
+    color: #007BFF;
+    border: 2px solid #007BFF;
+}
+.btn-secondary:hover {
+    background: #e3f0ff;
+    color: #0056b3;
+    border-color: #0056b3;
+}
+
+.form {
+    background: #fff;
+    padding: 2.2rem 2rem 2rem 2rem;
+    border-radius: 1.2rem;
+    box-shadow: 0 2px 8px rgba(0,123,255,0.08);
+    max-width: 420px;
+    margin: 2rem auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+}
+.form label {
+    font-weight: 500;
+    color: #0056b3;
+}
+.form input, .form select, .form textarea {
+    padding: 0.7rem;
+    border: 1.5px solid #cce0ff;
+    border-radius: 0.7rem;
+    font-size: 1.05rem;
+    font-family: inherit;
+    background: #f8f9fa;
+    transition: border 0.2s;
+}
+.form input:focus, .form select:focus, .form textarea:focus {
+    border: 1.5px solid #007BFF;
+    outline: none;
+}
+.form button {
+    align-self: flex-end;
+}
+
+.footer {
+    background: #1a237e;
+    color: #fff;
+    text-align: center;
+    padding: 2rem 0 1.2rem 0;
+    margin-top: 2rem;
+    border-radius: 2rem 2rem 0 0;
+}
+.footer .social-icons a {
+    color: #fff;
+    margin: 0 0.7rem;
+    font-size: 1.3rem;
+    transition: color 0.2s;
+}
+.footer .social-icons a:hover {
+    color: #007BFF;
+}
+
+/* Split layout for login/signup */
+.split-layout {
+    display: flex;
+    min-height: 100vh;
+}
+.split-left {
+    flex: 1;
+    background: linear-gradient(135deg, #007BFF 60%, #0056b3 100%);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border-radius: 0 2rem 2rem 0;
+}
+.split-left img {
+    max-width: 80%;
+    margin-bottom: 2rem;
+}
+.split-left h2 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.split-right {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f8f9fa;
+    border-radius: 2rem 0 0 2rem;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+    .navbar .container, .container {
+        flex-direction: column;
+        align-items: flex-start;
+        padding: 1rem;
+    }
+    .services-list {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    .card {
+        min-width: 90%;
+        max-width: 100%;
+    }
+    .split-layout {
+        flex-direction: column;
+    }
+    .split-left, .split-right {
+        border-radius: 0;
+        min-height: 200px;
+    }
+}
+@media (max-width: 600px) {
+    .navbar .container {
+        flex-direction: row;
+        padding: 0.5rem;
+    }
+    .nav-links {
+        flex-direction: column;
+        gap: 0.5rem;
+        background: #007BFF;
+        position: absolute;
+        top: 60px;
+        right: 0;
+        width: 180px;
+        display: none;
+        z-index: 100;
+        border-radius: 0 0 1rem 1rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .nav-links.open {
+        display: flex;
+    }
+    .navbar .container {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .logo {
+        font-size: 1.2rem;
+    }
+    .hero h1 {
+        font-size: 1.3rem;
+    }
+    .form {
+        padding: 1.2rem 0.7rem;
+    }
+}
+
+/* Utility classes */
+.text-center { text-align: center; }
+.mt-2 { margin-top: 2rem; }
+.mb-2 { margin-bottom: 2rem; }
+.shadow { box-shadow: 0 2px 8px rgba(0,123,255,0.08); }
+.rounded { border-radius: 1.2rem; }
+
+/* WhatsApp floating button */
+.whatsapp-float {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: #25D366;
+    color: #fff;
+    border-radius: 50%;
+    width: 56px;
+    height: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+    z-index: 999;
+    transition: background 0.2s;
+}
+.whatsapp-float:hover {
+    background: #128C7E;
+}
+
+/* Spinner */
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #007BFF;
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    animation: spin 1s linear infinite;
+    margin: 2rem auto;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 
