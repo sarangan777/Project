@@ -69,8 +69,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($stmt) {
             $userId = $_SESSION['user_id'] ?? null;
             $estimated_cost = $servisor['base_fee'];
+            $status_id = 1; // Default status: Pending
+            $status_id = 1; // Default status: Pending
+            $status_id = 1; // Default status: Pending
             
-            $stmt->bind_param('siisssssssdii',
+            $stmt->bind_param('siisssssssdi',
                 $booking_number,
                 $userId,
                 $servisor_id,
@@ -82,7 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $booking_time,
                 $service_description,
                 $estimated_cost,
-                $payment_method_id
+                $payment_method_id,
+                $status_id
+                $status_id
+                $status_id
             );
             
             if ($stmt->execute()) {
