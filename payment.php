@@ -33,10 +33,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $table_check = $conn->query("SHOW TABLES LIKE 'booking_statuses'");
         if ($table_check && $table_check->num_rows > 0) {
             // New schema with normalized tables
-            $stmt = $conn->prepare("INSERT INTO bookings (booking_number, user_id, servisor_id, customer_name, customer_phone, customer_email, customer_address, booking_date, booking_time, service_description, estimated_cost, payment_method_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)");
+            $stmt = $conn->prepare("INSERT INTO bookings (booking_number, user_id, servisor_id, customer_name, customer_phone, customer_email, customer_address, booking_date, booking_time, service_description, estimated_cost, payment_method_id, status_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             
             $userId = $_SESSION['user_id'] ?? null;
-            $stmt->bind_param('siissssssdi', 
+            $statusId = 1; // Pending status
+            $stmt->bind_param('siissssssdii', 
                 $bookingNumber,
                 $userId,
                 $bookingData['servisor_id'],
@@ -48,7 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $bookingData['booking_time'],
                 $bookingData['service_description'],
                 $bookingData['estimated_cost'],
-                $paymentMethodId
+                $paymentMethodId,
+                $statusId
             );
         } else {
             // Old schema - fallback
